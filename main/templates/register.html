@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{% static 'css/bulma.min.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column mt-5 p-3 is-one-third">
+                <h1 class="title">Create Account</h1>
+                
+                {% if error %}
+                <p class="p-2 has-text-danger">{{error}}</p>
+                {% endif %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control">
+                            <input required class="input" type="text" name="username" placeholder="Username">
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control">
+                            <input required class="input" type="email" name="email" placeholder="Email">
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">First Name</label>
+                        <div class="control">
+                            <input required class="input" type="text" name="first_name" placeholder="First Name">
+                        </div>
+                    </div>
+
+                    
+                    <div class="field">
+                        <label class="label">Last Name</label>
+                        <div class="control">
+                            <input required class="input" type="text" name="last_name" placeholder="Last Name">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Password</label>
+                        <div class="control">
+                            <input required class="input" type="password" name="password" placeholder="Password">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <input class="button is-link" type="submit" value="Register">
+                        </div>
+                    </div>
+                </form>
+                <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

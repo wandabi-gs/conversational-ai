@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{% static 'css/bulma.min.css' %}">
+</head>
+
+<body>
+    <div class="container p-3">
+        <div id="conversation" style="height: 80vh;overflow: auto;">
+            {% for message in conversation %}
+            {% if message.role == 'user' %}
+            <div class="p-2 m-2 has-background-info-light">
+                <p><b>You:</b> {{ message.content }}</p>
+            </div>
+            {% elif message.role == 'assistant' %}
+            <div class="p-2 m-2 has-background-link-light">
+                <p><b>ChatBot:</b> {{ message.content }}</p>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <form id="chat-form" class="p-4" method="POST"">
+            {% csrf_token %}
+            <div class=" field is-flex">
+            <input class="input" id="user-input" type="text" name="user_input" placeholder="Your message" />
+            <input id="chat-button" type="submit" class="button is-link ml-4" value="Send">
+    </div>
+    </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatForm = document.getElementById('chat-form');
+            const userInput = document.getElementById('user-input');
+            const conversation = document.getElementById('conversation');
+
+            conversation.scrollTop = conversation.scrollHeight;
+
+            userInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    postFormData();
+                }
+            });
+
+            userInput.focus();
+
+            chatForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                postFormData();
+            })
+        });
+
+        function postFormData() {
+            const conversation = document.getElementById('conversation');
+            const userInput = document.getElementById('user-input').value.trim();
+            if (userInput.length > 0) {
+                //disable user-input and chat-button
+                document.getElementById('user-input').disabled = true;
+                document.getElementById('chat-button').disabled = true;
+
+                const user_html_data = getHtmldata("You", false, userInput);
+                conversation.innerHTML += user_html_data;
+                conversation.scrollTop = conversation.scrollHeight;
+                const formData = new FormData();
+                formData.append('user_input', userInput);
+                fetch('', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const html_data = getHtmldata("Bot", true, data.response);
+                        conversation.innerHTML += html_data;
+                        conversation.scrollTop = conversation.scrollHeight;
+                        document.getElementById('user-input').value = '';
+                        document.getElementById('user-input').disabled = false;
+                        document.getElementById('chat-button').disabled = false;
+                    })
+                    .catch(error => {
+                        //append an alert saying error occured at the top of the page
+                        let divAlert = document.createElement('div');
+                        divAlert.className = "notification is-danger";
+                        divAlert.innerHTML = "An error occured. Please try again later.";
+                        document.body.insertBefore(divAlert, document.body.firstChild);
+
+                        //remove the last child in conversation element
+                        const conversation = document.getElementById('conversation');
+                        conversation.removeChild(conversation.lastChild);
+                        console.log(error);
+                    });
+            }
+        }
+
+        function getHtmldata(user, bot, data) {
+            var dclass = bot ? "has-background-link-light" : "has-background-info-light";
+
+            var html_data = `
+                <div class="p-2 m-2 ${dclass}">
+                    <p><b>${user}:</b> ${data}</p>
+                </div>
+            `;
+
+            return html_data;
+        }
+    </script>
+
+</body>
+
+</html>
