@@ -72,6 +72,14 @@ class Login(View):
             if authenticate(request=request, username=username, password=password):
                 login(request=request, user=user)
                 chats = Chat.objects.filter(user=user)
+
+                conversation = []
+                for chat in chats:
+                    conversation.append({"role": "user", "content": chat.message})
+                    conversation.append({"role": "assistant", "content": chat.response})
+
+                request.session['conversation'] = conversation
+
                 return redirect('home')
 
             else:
@@ -82,17 +90,20 @@ class Login(View):
 
 
 class ChatbotView(View):
-    system_msg = {
-        "role": "system",
-        "content": """
-        You are a friend. Your name is ella. You are having a vocal conversation with a user.
-        You will never output any markdown or formatted text of any kind, 
-        and you will speak in a concise and highly conversational manner. 
-        You will also adopt any persona that the user may ask of you.
-      """
-    }
-
+    system_msg = {}
     def post(self, request):
+        self.system_msg = {
+            "role": "system",
+            "content": f"""
+            You are a friend. Your name is {config('BOT_NAME')}.This users name is {request.user.last_name} {request.user.first_name}.
+            You are having a vocal conversation with a user.
+            Remember to be casual sneeking in one of this users name in the response once in a while.
+            You will never output any markdown or formatted text of any kind, 
+            and you will speak in a concise, friendly, casual and highly conversational manner. 
+            You will also adopt any persona that the user may ask of you.
+        """
+        }
+
         if not request.user.is_authenticated:
             return redirect('login')
 
@@ -124,10 +135,12 @@ class ChatbotView(View):
 
             request.session['conversation'] = conversation
 
-        except Exception:
-            return Http404()
+            return JsonResponse({"response": reply})
 
-        return JsonResponse({"response" : reply})
+        except Exception as e:
+            print(e)
+            print("#####################################################")
+            return Http404()
 
     def get(self, request):
         if not request.user.is_authenticated:
